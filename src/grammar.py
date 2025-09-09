@@ -11,7 +11,7 @@ directive : "Hello" "World" "!"
              | bltu | bgeu | lb | lh | lw | lbu | lhu | sb | sh | sw 
              | fence | fence_i | ecall | ebreak
 
-REG : /x([0-9]|[1-2][0-9]|3[0-1])|zero|ra|[sgt]p|t[0-6]|a[0-7]|s[0-9]|s1[01]|this/
+REG : /x([1-2][0-9]|3[0-1]|[0-9])|zero|ra|[sgt]p|t[0-6]|a[0-7]|s1[01]|s[0-9]|this/
 IMM : /0x[0-9a-fA-F]+|0o[0-7]+|[0-9]+/
 
 // I-type инструкции
