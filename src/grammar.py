@@ -44,10 +44,12 @@ math_expr       : ternary
 ?sum            : product
                 | sum "+" product -> add
                 | sum "-" product -> sub
-?product        : unary
-                | product "*" unary -> mul
-                | product "/" unary -> div
-                | product "%" unary -> modulo
+?product        : power
+                | product "*" power -> mul
+                | product "/" power -> div
+                | product "%" power -> modulo
+?power          : unary
+                | unary "**" power -> power
 ?unary          : atomic
                 | "+"      unary -> unary_pos
                 | "-"      unary -> unary_neg
