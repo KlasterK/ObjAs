@@ -11,8 +11,11 @@ directive : "Hello" "World" "!"
              | bltu | bgeu | lb | lh | lw | lbu | lhu | sb | sh | sw 
              | fence | fence_i | ecall | ebreak
 
-reg : /x([1-2][0-9]|3[0-1]|[0-9])|zero|ra|[sgt]p|t[0-6]|a[0-7]|s1[01]|s[0-9]|this/
-?integer : hex_integer | dec_integer | oct_integer | bin_integer
+reg         : /x([1-2][0-9]|3[0-1]|[0-9])|zero|ra|[sgt]p|t[0-6]|a[0-7]|s1[01]|s[0-9]|this/
+?integer    : BIN_INTEGER -> bin_integer 
+            | OCT_INTEGER -> oct_integer 
+            | HEX_INTEGER -> hex_integer 
+            | DEC_INTEGER -> dec_integer
 
 math_expr       : ternary
 ?ternary        : logical_or
@@ -54,10 +57,10 @@ math_expr       : ternary
 ?atomic         : integer
                 | "(" ternary ")"
 
-dec_integer : /(0[Dd])?[0-9_]+/
-hex_integer : /0[Xx][0-9a-fA-F_]+/
-oct_integer : /0[Oo][0-7_]+/
-bin_integer : /0[Bb][01_]+/
+DEC_INTEGER    : /(0[Dd])?[0-9_]+/
+HEX_INTEGER.10 : /0[Xx][0-9a-fA-F_]+/
+OCT_INTEGER.10 : /0[Oo][0-7_]+/
+BIN_INTEGER.10 : /0[Bb][01_]+/
 
 // I-type инструкции
 addi	: "addi" reg "," reg "," math_expr
