@@ -1,7 +1,7 @@
 grammar = '''
 
 ?start  : program
-program : (directive | instruction)*
+program : (directive | instruction NEWLINE)*
 
 directive : "Hello" "World" "!"
 
@@ -11,57 +11,102 @@ directive : "Hello" "World" "!"
              | bltu | bgeu | lb | lh | lw | lbu | lhu | sb | sh | sw 
              | fence | fence_i | ecall | ebreak
 
-REG : /x([1-2][0-9]|3[0-1]|[0-9])|zero|ra|[sgt]p|t[0-6]|a[0-7]|s1[01]|s[0-9]|this/
-IMM : /0x[0-9a-fA-F]+|0o[0-7]+|[0-9]+/
+reg : /x([1-2][0-9]|3[0-1]|[0-9])|zero|ra|[sgt]p|t[0-6]|a[0-7]|s1[01]|s[0-9]|this/
+?integer : hex_integer | dec_integer | oct_integer | bin_integer
+
+math_expr       : ternary
+?ternary        : logical_or
+                | logical_or "?" ternary ":" ternary -> ternary
+?logical_or     : logical_and
+                | logical_or "||" logical_and -> logical_or
+?logical_and    : bitwise_or
+                | logical_and "&&" bitwise_or -> logical_and
+?bitwise_or     : bitwise_xor
+                | bitwise_or "|" bitwise_xor -> bitwise_or
+?bitwise_xor    : bitwise_and
+                | bitwise_xor "^" bitwise_and -> bitwise_xor
+?bitwise_and    : equal
+                | bitwise_and "&" equal -> bitwise_and
+?equal          : more_less
+                | equal "==" more_less -> equal_to
+                | equal "!=" more_less -> not_equal_to
+?more_less      : bitwise_shift
+                | more_less ">"  bitwise_shift -> more_than
+                | more_less "<"  bitwise_shift -> less_than
+                | more_less ">=" bitwise_shift -> more_than_or_equal
+                | more_less "<=" bitwise_shift -> less_than_or_equal
+?bitwise_shift  : sum
+                | bitwise_shift "<<" sum -> bitwise_left_shift
+                | bitwise_shift ">>" sum -> bitwise_right_shift
+?sum            : product
+                | sum "+" product -> add
+                | sum "-" product -> sub
+?product        : unary
+                | product "*" unary -> mul
+                | product "/" unary -> div
+                | product "%" unary -> modulo
+?unary          : atomic
+                | "+"      unary -> unary_pos
+                | "-"      unary -> unary_neg
+                | "!"      unary -> logical_not
+                | "~"      unary -> bitwise_not
+                | "sizeof" unary -> sizeof
+?atomic         : integer
+                | "(" ternary ")"
+
+dec_integer : /(0[Dd])?[0-9_]+/
+hex_integer : /0[Xx][0-9a-fA-F_]+/
+oct_integer : /0[Oo][0-7_]+/
+bin_integer : /0[Bb][01_]+/
 
 // I-type инструкции
-addi	: "addi" REG "," REG "," IMM
-andi	: "andi" REG "," REG "," IMM
-slli	: "slli" REG "," REG "," IMM
-slti	: "slti" REG "," REG "," IMM
-sltiu	: "sltiu" REG "," REG "," IMM
-xori	: "xori" REG "," REG "," IMM
-srli	: "srli" REG "," REG "," IMM
-srai	: "srai" REG "," REG "," IMM
-ori	    : "ori" REG "," REG "," IMM
+addi	: "addi" reg "," reg "," math_expr
+andi	: "andi" reg "," reg "," math_expr
+slli	: "slli" reg "," reg "," math_expr
+slti	: "slti" reg "," reg "," math_expr
+sltiu	: "sltiu" reg "," reg "," math_expr
+xori	: "xori" reg "," reg "," math_expr
+srli	: "srli" reg "," reg "," math_expr
+srai	: "srai" reg "," reg "," math_expr
+ori	    : "ori" reg "," reg "," math_expr
 
 // U-type инструкции
-lui		: "lui" REG "," IMM
-auipc	: "auipc" REG "," IMM
+lui		: "lui" reg "," math_expr
+auipc	: "auipc" reg "," math_expr
 
 // R-type инструкции
-add		: "add" REG "," REG "," REG
-sub		: "sub" REG "," REG "," REG
-sll		: "sll" REG "," REG "," REG
-slt		: "slt" REG "," REG "," REG
-sltu	: "sltu" REG "," REG "," REG
-xor		: "xor" REG "," REG "," REG
-srl		: "srl" REG "," REG "," REG
-sra		: "sra" REG "," REG "," REG
-or	    : "or" REG "," REG "," REG
-and		: "and" REG "," REG "," REG
+add		: "add" reg "," reg "," reg
+sub		: "sub" reg "," reg "," reg
+sll		: "sll" reg "," reg "," reg
+slt		: "slt" reg "," reg "," reg
+sltu	: "sltu" reg "," reg "," reg
+xor		: "xor" reg "," reg "," reg
+srl		: "srl" reg "," reg "," reg
+sra		: "sra" reg "," reg "," reg
+or	    : "or" reg "," reg "," reg
+and		: "and" reg "," reg "," reg
 
 // J-type инструкции
-jal		: "jal" REG "," IMM
-jalr	: "jalr" REG "," REG "," IMM
+jal		: "jal" reg "," math_expr
+jalr	: "jalr" reg "," reg "," math_expr
 
 // B-type инструкции
-beq		: "beq" REG "," REG "," IMM
-bne		: "bne" REG "," REG "," IMM
-blt		: "blt" REG "," REG "," IMM
-bge		: "bge" REG "," REG "," IMM
-bltu	: "bltu" REG "," REG "," IMM
-bgeu	: "bgeu" REG "," REG "," IMM
+beq		: "beq" reg "," reg "," math_expr
+bne		: "bne" reg "," reg "," math_expr
+blt		: "blt" reg "," reg "," math_expr
+bge		: "bge" reg "," reg "," math_expr
+bltu	: "bltu" reg "," reg "," math_expr
+bgeu	: "bgeu" reg "," reg "," math_expr
 
 // S-type инструкции (load/store)
-lb	    : "lb" REG "," IMM "(" REG ")"
-lh	    : "lh" REG "," IMM "(" REG ")"
-lw	    : "lw" REG "," IMM "(" REG ")"
-lbu		: "lbu" REG "," IMM "(" REG ")"
-lhu		: "lhu" REG "," IMM "(" REG ")"
-sb	    : "sb" REG "," IMM "(" REG ")"
-sh	    : "sh" REG "," IMM "(" REG ")"
-sw	    : "sw" REG "," IMM "(" REG ")"
+lb	    : "lb" reg "," math_expr "(" reg ")"
+lh	    : "lh" reg "," math_expr "(" reg ")"
+lw	    : "lw" reg "," math_expr "(" reg ")"
+lbu		: "lbu" reg "," math_expr "(" reg ")"
+lhu		: "lhu" reg "," math_expr "(" reg ")"
+sb	    : "sb" reg "," math_expr "(" reg ")"
+sh	    : "sh" reg "," math_expr "(" reg ")"
+sw	    : "sw" reg "," math_expr "(" reg ")"
 
 // Special instructions
 fence	: "fence"
@@ -71,6 +116,7 @@ ebreak	: "ebreak"
 
 %import common.WS
 %import common.C_COMMENT
+%import common.NEWLINE
 %ignore WS
 %ignore C_COMMENT
 %ignore /;.*/
