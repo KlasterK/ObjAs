@@ -1,7 +1,7 @@
-grammar = '''
+grammar = r'''
 
 ?start  : program
-program : (directive | instruction NEWLINE)*
+program : (directive | instruction | label_def)*
 
 directive : "Hello" "World" "!"
 
@@ -16,6 +16,9 @@ reg         : /x([1-2][0-9]|3[0-1]|[0-9])|zero|ra|[sgt]p|t[0-6]|a[0-7]|s1[01]|s[
             | OCT_INTEGER -> oct_integer 
             | HEX_INTEGER -> hex_integer 
             | DEC_INTEGER -> dec_integer
+
+label_def   : /\.{,2}[A-Za-z_@][A-Za-z_@0-9]*/ ":"
+label_val   : /\.{,2}[A-Za-z_@][A-Za-z_@0-9]*/
 
 math_expr       : ternary
 ?ternary        : logical_or
@@ -58,6 +61,7 @@ math_expr       : ternary
                 | "sizeof" unary -> sizeof
 ?atomic         : integer
                 | "(" ternary ")"
+                | label_val
 
 DEC_INTEGER    : /(0[Dd])?[0-9_]+/
 HEX_INTEGER.10 : /0[Xx][0-9a-fA-F_]+/
