@@ -5,16 +5,10 @@ program : (directive | instruction | label_def)*
 
 directive : "Hello" "World" "!"
 
-?instruction : addi | andi | slli | slti | sltiu | xori | srli | srai 
-             | ori | lui | auipc | add | sub | sll | slt | sltu | xor 
-             | srl | sra | or | and | jal | jalr | beq | bne | blt | bge 
-             | bltu | bgeu | lb | lh | lw | lbu | lhu | sb | sh | sw 
-             | fence | fence_i | ecall | ebreak
-
 reg         : /x([1-2][0-9]|3[0-1]|[0-9])|zero|ra|[sgt]p|t[0-6]|a[0-7]|s1[01]|s[0-9]|this/
-?integer    : BIN_INTEGER -> bin_integer 
-            | OCT_INTEGER -> oct_integer 
-            | HEX_INTEGER -> hex_integer 
+?integer    : BIN_INTEGER -> bin_integer
+            | OCT_INTEGER -> oct_integer
+            | HEX_INTEGER -> hex_integer
             | DEC_INTEGER -> dec_integer
 
 label_def   : /\.{,2}[A-Za-z_@][A-Za-z_@0-9]*/ ":"
@@ -68,60 +62,79 @@ HEX_INTEGER.10 : /0[Xx][0-9a-fA-F_]+/
 OCT_INTEGER.10 : /0[Oo][0-7_]+/
 BIN_INTEGER.10 : /0[Bb][01_]+/
 
-// I-type инструкции
-addi	: "addi" reg "," reg "," math_expr
-andi	: "andi" reg "," reg "," math_expr
-slli	: "slli" reg "," reg "," math_expr
-slti	: "slti" reg "," reg "," math_expr
-sltiu	: "sltiu" reg "," reg "," math_expr
-xori	: "xori" reg "," reg "," math_expr
-srli	: "srli" reg "," reg "," math_expr
-srai	: "srai" reg "," reg "," math_expr
-ori	    : "ori" reg "," reg "," math_expr
+// ОСНОВНОЕ ПРАВИЛО для всех инструкций с сохранением типа
+instruction : r_type_instr
+            | i_type_instr
+            | s_type_instr
+            | b_type_instr
+            | u_type_instr
+            | j_type_instr
+            | special_instr
 
-// U-type инструкции
-lui		: "lui" reg "," math_expr
-auipc	: "auipc" reg "," math_expr
+// R-TYPE ИНСТРУКЦИИ (арифметика регистр-регистр) [10]
+!r_type_instr : "add"  rrr_args
+              | "sub"  rrr_args
+              | "sll"  rrr_args
+              | "slt"  rrr_args
+              | "sltu" rrr_args
+              | "xor"  rrr_args
+              | "srl"  rrr_args
+              | "sra"  rrr_args
+              | "or"   rrr_args
+              | "and"  rrr_args
 
-// R-type инструкции
-add		: "add" reg "," reg "," reg
-sub		: "sub" reg "," reg "," reg
-sll		: "sll" reg "," reg "," reg
-slt		: "slt" reg "," reg "," reg
-sltu	: "sltu" reg "," reg "," reg
-xor		: "xor" reg "," reg "," reg
-srl		: "srl" reg "," reg "," reg
-sra		: "sra" reg "," reg "," reg
-or	    : "or" reg "," reg "," reg
-and		: "and" reg "," reg "," reg
+// I-TYPE ИНСТРУКЦИИ (арифметика с непосредственным значением) [15]
+!i_type_instr : "addi"  rri_args
+              | "slti"  rri_args
+              | "sltiu" rri_args
+              | "xori"  rri_args
+              | "ori"   rri_args
+              | "andi"  rri_args
+              | "slli"  rri_args
+              | "srli"  rri_args
+              | "srai"  rri_args
+              | "lb"    mem_args
+              | "lh"    mem_args
+              | "lw"    mem_args
+              | "lbu"   mem_args
+              | "lhu"   mem_args
+              | "jalr"  mem_args
 
-// J-type инструкции
-jal		: "jal" reg "," math_expr
-jalr	: "jalr" reg "," reg "," math_expr
+// S-TYPE ИНСТРУКЦИИ (сохранение в память) [3]
+!s_type_instr : "sb" mem_args
+              | "sh" mem_args
+              | "sw" mem_args
 
-// B-type инструкции
-beq		: "beq" reg "," reg "," math_expr
-bne		: "bne" reg "," reg "," math_expr
-blt		: "blt" reg "," reg "," math_expr
-bge		: "bge" reg "," reg "," math_expr
-bltu	: "bltu" reg "," reg "," math_expr
-bgeu	: "bgeu" reg "," reg "," math_expr
+// B-TYPE ИНСТРУКЦИИ (условные переходы) [6]
+!b_type_instr : "beq"  rri_args
+              | "bne"  rri_args
+              | "blt"  rri_args
+              | "bge"  rri_args
+              | "bltu" rri_args
+              | "bgeu" rri_args
 
-// S-type инструкции (load/store)
-lb	    : "lb" reg "," math_expr "(" reg ")"
-lh	    : "lh" reg "," math_expr "(" reg ")"
-lw	    : "lw" reg "," math_expr "(" reg ")"
-lbu		: "lbu" reg "," math_expr "(" reg ")"
-lhu		: "lhu" reg "," math_expr "(" reg ")"
-sb	    : "sb" reg "," math_expr "(" reg ")"
-sh	    : "sh" reg "," math_expr "(" reg ")"
-sw	    : "sw" reg "," math_expr "(" reg ")"
+// U-TYPE ИНСТРУКЦИИ (загрузка верхних бит) [2]
+!u_type_instr : "lui"    ri_args
+              | "auipc"  ri_args
 
-// Special instructions
-fence	: "fence"
-fence_i	: "fence.i"
-ecall	: "ecall"
-ebreak	: "ebreak"
+// J-TYPE ИНСТРУКЦИИ (безусловные переходы) [1]
+!j_type_instr : "jal"    ri_args
+
+// Instructions with special arguments [4]
+!special_instr  : FENCE   fence_args
+                | FENCE_I
+                | "ecall"
+                | "ebreak"
+
+// ФОРМАТЫ АРГУМЕНТОВ (детализированные)
+rrr_args      : reg "," reg "," reg
+rri_args      : reg "," reg "," math_expr
+?mem_args     : reg "," math_expr "(" reg ")" | rri_args
+ri_args       : reg "," math_expr
+fence_args    : /[iorw]+/ "," /[iorw]+/
+
+FENCE      : "fence"
+FENCE_I.10 : "fence.i"
 
 %import common.WS
 %import common.C_COMMENT
