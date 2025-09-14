@@ -1,18 +1,20 @@
 grammar = r'''
 
-?start  : program
-program : (directive | instruction | label_def)*
+?start  : scope
+scope   : (directive | instruction | label_def)*
 
-directive : "Hello" "World" "!"
+directive   : section | namespace
+section     : "section" DOTTED_NAME
+namespace   : "namespace" DOTTED_NAME "{" scope "}"
 
-reg         : /x([1-2][0-9]|3[0-1]|[0-9])|zero|ra|[sgt]p|t[0-6]|a[0-7]|s1[01]|s[0-9]|this/
+reg         : /x([1-2][0-9]|3[0-1]|[0-9])|zero|ra|[sgt]p|t[0-6]|a[0-7]|s1[0-1]|s[0-9]|this/
 ?integer    : BIN_INTEGER -> bin_integer
             | OCT_INTEGER -> oct_integer
             | HEX_INTEGER -> hex_integer
             | DEC_INTEGER -> dec_integer
 
-label_def   : /\.{,2}[A-Za-z_@][A-Za-z_@0-9]*/ ":"
-label_val   : /\.{,2}[A-Za-z_@][A-Za-z_@0-9]*/
+label_def   : DOTTED_NAME ":"
+label_val   : DOTTED_NAME
 
 math_expr       : ternary
 ?ternary        : logical_or
@@ -133,8 +135,9 @@ rri_args      : reg "," reg "," math_expr
 ri_args       : reg "," math_expr
 fence_args    : /[iorw]+/ "," /[iorw]+/
 
-FENCE      : "fence"
-FENCE_I.10 : "fence.i"
+FENCE       : "fence"
+FENCE_I.10  : "fence.i"
+DOTTED_NAME : /[A-Za-z_@.][A-Za-z_@0-9.]+/
 
 %import common.WS
 %import common.C_COMMENT
