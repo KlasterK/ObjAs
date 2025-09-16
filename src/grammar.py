@@ -3,9 +3,12 @@ grammar = r'''
 ?start  : scope
 scope   : (directive | instruction | label_def)*
 
-directive   : section | namespace
-section     : "section" DOTTED_NAME
-namespace   : "namespace" DOTTED_NAME "{" scope "}"
+?directive  : "section" NAME \
+            -> section
+            | "namespace" NAME "{" scope "}" \
+            -> namespace
+            | "using" NAME ("::" NAME)* ("::" STAR)? \
+            -> using
 
 reg         : /x([1-2][0-9]|3[0-1]|[0-9])|zero|ra|[sgt]p|t[0-6]|a[0-7]|s1[0-1]|s[0-9]|this/
 ?integer    : BIN_INTEGER -> bin_integer
@@ -16,7 +19,7 @@ reg         : /x([1-2][0-9]|3[0-1]|[0-9])|zero|ra|[sgt]p|t[0-6]|a[0-7]|s1[0-1]|s
 label_def   : DOTTED_NAME ":"
 label_val   : DOTTED_NAME
 
-math_expr       : ternary
+?math_expr      : ternary
 ?ternary        : logical_or
                 | logical_or "?" ternary ":" ternary -> ternary
 ?logical_or     : logical_and
@@ -131,13 +134,15 @@ instruction : r_type_instr
 // ФОРМАТЫ АРГУМЕНТОВ (детализированные)
 rrr_args      : reg "," reg "," reg
 rri_args      : reg "," reg "," math_expr
-?mem_args     : reg "," math_expr "(" reg ")" | rri_args
+mem_args      : reg "," math_expr "(" reg ")"
 ri_args       : reg "," math_expr
 fence_args    : /[iorw]+/ "," /[iorw]+/
 
 FENCE       : "fence"
 FENCE_I.10  : "fence.i"
 DOTTED_NAME : /[A-Za-z_@.][A-Za-z_@0-9.]+/
+NAME        : /[A-Za-z_@][A-Za-z_@0-9]+/
+STAR        : "*"
 
 %import common.WS
 %import common.C_COMMENT
