@@ -10,14 +10,15 @@ scope   : (directive | instruction | label_def)*
             | "using" NAME ("::" NAME)* ("::" STAR)? \
             -> using
 
-reg         : /x([1-2][0-9]|3[0-1]|[0-9])|zero|ra|[sgt]p|t[0-6]|a[0-7]|s1[0-1]|s[0-9]|this/
-?integer    : BIN_INTEGER -> bin_integer
-            | OCT_INTEGER -> oct_integer
-            | HEX_INTEGER -> hex_integer
-            | DEC_INTEGER -> dec_integer
+reg      : /x([1-2][0-9]|3[0-1]|[0-9])|zero|ra|[sgt]p|t[0-6]|a[0-7]|s1[0-1]|s[0-9]|this/
+?integer : BIN_INTEGER -> bin_integer
+         | OCT_INTEGER -> oct_integer
+         | HEX_INTEGER -> hex_integer
+         | DEC_INTEGER -> dec_integer
 
-label_def   : DOTTED_NAME ":"
-label_val   : DOTTED_NAME
+label_def    : _dotted_name ":"
+label_val    : _dotted_name
+_dotted_name : NAME ("." NAME)*
 
 ?math_expr      : ternary
 ?ternary        : logical_or
@@ -140,7 +141,6 @@ fence_args    : /[iorw]+/ "," /[iorw]+/
 
 FENCE       : "fence"
 FENCE_I.10  : "fence.i"
-DOTTED_NAME : /[A-Za-z_@.][A-Za-z_@0-9.]+/
 NAME        : /[A-Za-z_@][A-Za-z_@0-9]+/
 STAR        : "*"
 
